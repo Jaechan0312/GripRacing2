@@ -6,13 +6,17 @@ public class ObstacleSpawner : MonoBehaviour
     public Transform player;          // 플레이어 위치
 
     [Header("장애물 생성 간격 설정")]
-    public float minSpawnDistance = 13f; // 최소 장애물 간격 (너무 좁으면 피하기 불가능)
-    public float maxSpawnDistance = 23f; // 최대 장애물 간격 (너무 멀면 지루함)
+    public float minSpawnDistance = 13f; // 최소 장애물 간격
+    public float maxSpawnDistance = 23f; // 최대 장애물 간격
 
-    [Header("장애물 생성 높이 설정")]
-    [Tooltip("기존 바닥 높이인 -2.45f를 기준으로 삼으세요.")]
-    public float minSpawnHeight = -2.45f; // 최저 높이
-    public float maxSpawnHeight = -1.0f;  // 최고 높이 (캐릭터 점프 높이에 따라 조절)
+    [Header("장애물 크기(높이) 설정")]
+    [Tooltip("장애물이 가질 수 있는 최소, 최대 높이(길이)를 설정하세요.")]
+    public float minHeight = 1.0f; // 최소 기둥 높이
+    public float maxHeight = 4.0f; // 최대 기둥 높이
+
+    [Header("바닥 기준 좌표")]
+    [Tooltip("장애물이 위치할 실제 바닥의 Y 좌표입니다.")]
+    public float groundY = -2.45f; // 기존 바닥 높이 (-2.45f)를 기준으로 고정
 
     public float destroyDelay = 15f;  // 삭제될 시간 (초)
 
@@ -20,19 +24,16 @@ public class ObstacleSpawner : MonoBehaviour
 
     void Start()
     {
-        // 첫 장애물 위치 설정 (첫 번째 간격도 랜덤으로 부여)
         float firstDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
         nextSpawnX = player.position.x + firstDistance;
     }
 
     void Update()
     {
-        // 플레이어가 생성 지점 근처(30f 앞)까지 오면 생성
         if (player.position.x > nextSpawnX - 30f)
         {
             SpawnObstacle();
 
-            // 핵심 수정 부분: 다음 장애물까지의 간격을 무작위로 뽑아서 더해줍니다.
             float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
             nextSpawnX += randomDistance;
         }
@@ -40,15 +41,25 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnObstacle()
     {
-        // Y값도 네 바닥 높이 사이에서 랜덤으로 결정!
-        float randomY = Random.Range(minSpawnHeight, maxSpawnHeight);
-        Vector3 spawnPos = new Vector3(nextSpawnX, randomY, 0);
-        // -----------------------------------------------------------------
+        // 1. 장애물의 높이(Y축 Scale)를 랜덤으로 결정
+        float randomHeight = Random.Range(minHeight, maxHeight);
 
-        // 1. 장애물을 생성하고 'tempObstacle'이라는 변수에 잠시 담아둬
+        // 2. 바닥(-2.45f)에 딱 붙도록 Y축 위치(Position)를 계산
+        // 공식: 바닥 위치 + (높이 / 2)
+        float spawnY = groundY + (randomHeight / 2f);
+
+        // 3. 최종 생성 위치 설정
+        Vector3 spawnPos = new Vector3(nextSpawnX, spawnY, 0);
+
+        // 4. 장애물 생성
         GameObject tempObstacle = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity);
 
-        // 2. 생성된 장애물한테 15초 뒤에 스스로 파괴되라고 명령해!
+        // 5. 생성된 장애물의 Y축 크기(Scale)를 변경하여 직사각형 기둥으로 만듦
+        // X와 Z 크기는 프리팹의 원본 크기를 그대로 유지해!
+        Vector3 currentScale = tempObstacle.transform.localScale;
+        tempObstacle.transform.localScale = new Vector3(currentScale.x, randomHeight, currentScale.z);
+
+        // 6. 지정된 시간 뒤 파괴
         Destroy(tempObstacle, destroyDelay);
     }
 }
