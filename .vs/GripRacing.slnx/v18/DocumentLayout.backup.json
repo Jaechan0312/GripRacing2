@@ -7,6 +7,14 @@
       "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\obstaclespawner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\documents\\github\\gripracing\\assets\\carcontroller2d.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\carcontroller2d.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\documents\\github\\gripracing\\assets\\gripinput.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\gripinput.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\documents\\github\\gripracing\\assets\\graphmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\graphmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -18,8 +26,32 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CarController2D.cs",
+              "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\CarController2D.cs",
+              "RelativeDocumentMoniker": "Assets\\CarController2D.cs",
+              "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\CarController2D.cs",
+              "RelativeToolTip": "Assets\\CarController2D.cs",
+              "ViewState": "AgIAAIgAAAAAAAAAAAAAAIgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T08:48:09.281Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GripInput.cs",
+              "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\GripInput.cs",
+              "RelativeDocumentMoniker": "Assets\\GripInput.cs",
+              "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\GripInput.cs",
+              "RelativeToolTip": "Assets\\GripInput.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAIwBsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-17T08:47:52.536Z"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -28,14 +60,14 @@
               "RelativeDocumentMoniker": "Assets\\ObstacleSpawner.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\ObstacleSpawner.cs",
               "RelativeToolTip": "Assets\\ObstacleSpawner.cs",
-              "ViewState": "AgIAADUAAAAAAAAAAAAQwEAAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAMUAAAAAAAAAAAAkwM8AAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-17T08:32:41.559Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "GraphManager.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\GripRacing\\Assets\\GraphManager.cs",
               "RelativeDocumentMoniker": "Assets\\GraphManager.cs",

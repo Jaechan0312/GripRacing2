@@ -349,8 +349,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -367,8 +367,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 90
+  m_fontSizeBase: 90
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -436,8 +436,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -25}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 270, y: -100}
+  m_SizeDelta: {x: 400, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &489440532
 GameObject:
@@ -738,6 +738,8 @@ MonoBehaviour:
   feverDuration: 10
   tunnelBottomY: 1
   tunnelTopY: 4.5
+  tunnelLength: 15
+  tunnelChance: 0.075
 --- !u!4 &521849939
 Transform:
   m_ObjectHideFlags: 0
@@ -1256,9 +1258,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarController2D
   moveSpeed: 7.5
-  flyForce: 30
-  maxUpwardVelocity: 15
+  jumpForce: 9.5
   fallMultiplier: 2.5
+  glideSpeed: -0.1
+  maxJumps: 2
   jumpThreshold: 70
 --- !u!114 &707584851
 MonoBehaviour:

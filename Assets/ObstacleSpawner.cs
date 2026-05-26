@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class ObstacleSpawner : MonoBehaviour
@@ -20,18 +21,36 @@ public class ObstacleSpawner : MonoBehaviour
     public float destroyDelay = 15f;
 
     [Header("등척성 피버 타임 설정")]
-    public float feverStartScore = 15f; // 15점 진입 고정
-    public float feverDuration = 10f;   // 피버 타임 지속 시간 (10초)
+    public float feverStartScore = 15f; // 레거시 유지
+    public float feverDuration = 10f;   // 레거시 유지
 
-    [Header("⭐ 터널 출구 높이 (가운데 통로 공간)")]
-    public float tunnelBottomY = 1.0f;  // 통로 바닥 (이 아래는 장애물벽)
-    public float tunnelTopY = 4.5f;     // 통로 천장 (이 위는 장애물벽) -> 틈새를 널널하게 3.5 확보
+    [Header("⭐ 터널 설정 (가운데 통로 공간)")]
+    public float tunnelBottomY = 1.0f;  // 통로 바닥
+    public float tunnelTopY = 4.5f;     // 통로 천장
+    public float tunnelLength = 40f;    // 터널 가로 길이
+
+    [Range(0f, 1f)]
+    public float tunnelChance = 0.25f;  // 터널이 등장할 기본 확률 (25%)
 
     private float nextSpawnX;
     private bool isFeverTime = false;
-    private float feverTimer = 0f;
-    private float currentScore = 0f;
-    private bool hasSpawnedFeverWall = false; // 피버 장벽 중복 생성 방지
+    private float feverTimer = 0f;            // 레거시 유지
+    private float currentScore = 0f;          // 레거시 유지
+    private bool hasSpawnedFeverWall = false; // 레거시 유지
+
+    // 일반 장애물 연속 생성 카운트 변수
+    private int normalObstacleCount = 0;
+
+    // 터널 위치 체크용 변수
+    private float tunnelStartX = 0f;      // 터널이 시작되는 실제 X 좌표
+    private float tunnelEndX = 0f;        // 터널이 끝나는 실제 X 좌표
+    private bool isWarningActive = false;  // 현재 워닝 문구가 켜져 있는지 여부
+
+    private bool isNextObstacleTunnel = false; // "다음번에 터널을 깔아라"는 미리 결정된 예약 신호
+    private float precedingObstacleX = -999f;  // 터널 바로 전 장애물의 X 좌표
+
+    // ⭐ 타이밍 버그 해결을 위한 경고 대기 플래그
+    private bool safeToTriggerWarning = false;
 
     void Start()
     {
@@ -39,45 +58,73 @@ public class ObstacleSpawner : MonoBehaviour
         nextSpawnX = player.position.x + firstDistance;
 
         if (warningText != null) warningText.gameObject.SetActive(false);
+
+        DecideNextObstacleType();
+    }
+
+    void DecideNextObstacleType()
+    {
+        if (normalObstacleCount >= 7 || Random.value < tunnelChance)
+        {
+            isNextObstacleTunnel = true;
+        }
+        else
+        {
+            isNextObstacleTunnel = false;
+        }
     }
 
     void Update()
     {
-        // 1. 피버 타임 조건 체크
-        if (!isFeverTime && currentScore >= feverStartScore)
+        // ⭐ 1. 워닝 경고문 타이밍 실시간 체크 (구조 개선)
+        if (safeToTriggerWarning)
         {
-            StartFeverTime();
+            // [켜기 조건] 아직 경고문이 안 켜졌고, 플레이어가 '전 장애물 X 위치'를 통과하는 바로 그 순간!
+            if (!isWarningActive && player.position.x >= precedingObstacleX)
+            {
+                TurnOnWarning();
+            }
+
+            // [끄기 조건] 경고문이 켜져 있고, 플레이어가 '터널 입구 X 위치'에 도달한 순간!
+            if (isWarningActive && player.position.x >= tunnelStartX)
+            {
+                TurnOffWarning();
+            }
         }
 
-        // 2. 피버 타임 타이머 작동
-        if (isFeverTime)
+        // 2. 피버 타임 종료 체크
+        if (isFeverTime && player.position.x >= tunnelEndX)
         {
-            feverTimer -= Time.deltaTime;
-            if (feverTimer <= 0)
-            {
-                EndFeverTime();
-            }
+            isFeverTime = false;
         }
 
         // 3. 장애물 생성 루프
         if (player.position.x > nextSpawnX - 30f)
         {
-            if (isFeverTime)
+            if (isNextObstacleTunnel)
             {
-                // ⭐ 피버 타임일 때는 개별 기둥 스폰을 멈추고, 긴 터널 장벽을 딱 '한 번' 길게 깝니다.
-                if (!hasSpawnedFeverWall)
-                {
-                    SpawnLongTunnelWall();
-                }
+                SpawnLongTunnelWall();
             }
             else
             {
-                // 평소에는 기존 랜덤 장애물 생성
-                SpawnObstacle();
-                float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
-                nextSpawnX += randomDistance;
+                SpawnNormalObstacleAndUpdate();
             }
         }
+    }
+
+    void SpawnNormalObstacleAndUpdate()
+    {
+        SpawnObstacle();
+
+        normalObstacleCount++;
+
+        // 직전 장애물의 위치를 기억해 둠
+        precedingObstacleX = nextSpawnX;
+
+        float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
+        nextSpawnX += randomDistance;
+
+        DecideNextObstacleType();
     }
 
     void SpawnObstacle()
@@ -93,55 +140,69 @@ public class ObstacleSpawner : MonoBehaviour
         Destroy(tempObstacle, destroyDelay);
     }
 
-    // ⭐ 핵심 수정: y=3, y=10 그래프 그리듯 완벽하게 이어지는 가로 롱 장벽 생성
     void SpawnLongTunnelWall()
     {
-        hasSpawnedFeverWall = true;
+        StartFeverTime();
 
-        // 플레이어 속도나 피버 지속 시간(10초)을 감안하여 엄청나게 길게 장벽 가로 크기를 잡습니다.
-        float wallLength = 150f;
-        float spawnXPosition = player.position.x + 15f; // 플레이어 조금 앞쪽부터 장벽 시작
+        isNextObstacleTunnel = false;
+        normalObstacleCount = 0;
 
-        // 1. 아래쪽을 꽉 채우는 연속 장벽 (y = tunnelBottomY 이하를 전부 채움)
+        float spawnXPosition = nextSpawnX;
+        tunnelStartX = spawnXPosition;
+        tunnelEndX = spawnXPosition + tunnelLength;
+
+        // ⭐ 터널이 미리 스폰되었으니, 이제 플레이어가 전 장애물을 지나갈 때 경고를 띄우라고 신호를 보냄!
+        safeToTriggerWarning = true;
+
+        // 1. 아래쪽 연속 장벽
         float bottomWallHeight = Mathf.Abs(tunnelBottomY - groundY);
         float bottomWallCenterY = groundY + (bottomWallHeight / 2f);
-        Vector3 bottomPos = new Vector3(spawnXPosition + (wallLength / 2f), bottomWallCenterY, 0);
+        Vector3 bottomPos = new Vector3(spawnXPosition + (tunnelLength / 2f), bottomWallCenterY, 0);
 
         GameObject bottomWall = Instantiate(obstaclePrefab, bottomPos, Quaternion.identity);
-        bottomWall.transform.localScale = new Vector3(wallLength, bottomWallHeight, bottomWall.transform.localScale.z);
-        Destroy(bottomWall, feverDuration + 2f); // 피버타임 끝나면 파괴
+        bottomWall.transform.localScale = new Vector3(tunnelLength, bottomWallHeight, bottomWall.transform.localScale.z);
+        Destroy(bottomWall, destroyDelay);
 
-        // 2. 위쪽을 꽉 채우는 연속 장벽 (y = tunnelTopY 이상을 전부 채움)
-        float topWallHeight = 10f; // 천장을 넉넉히 가릴 높이
+        // 2. 위쪽 연속 장벽
+        float topWallHeight = 10f;
         float topWallCenterY = tunnelTopY + (topWallHeight / 2f);
-        Vector3 topPos = new Vector3(spawnXPosition + (wallLength / 2f), topWallCenterY, 0);
+        Vector3 topPos = new Vector3(spawnXPosition + (tunnelLength / 2f), topWallCenterY, 0);
 
         GameObject topWall = Instantiate(obstaclePrefab, topPos, Quaternion.identity);
-        topWall.transform.localScale = new Vector3(wallLength, topWallHeight, topWall.transform.localScale.z);
-        Destroy(topWall, feverDuration + 2f); // 피버타임 끝나면 파괴
+        topWall.transform.localScale = new Vector3(tunnelLength, topWallHeight, topWall.transform.localScale.z);
+        Destroy(topWall, destroyDelay);
+
+        float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
+        nextSpawnX = tunnelEndX + randomDistance;
+
+        DecideNextObstacleType();
     }
 
     void StartFeverTime()
     {
         isFeverTime = true;
         feverTimer = feverDuration;
-        hasSpawnedFeverWall = false; // 플래그 초기화
+        hasSpawnedFeverWall = false;
+    }
 
+    void TurnOnWarning()
+    {
         if (warningText != null)
         {
             warningText.gameObject.SetActive(true);
             warningText.text = "WARNING";
+            isWarningActive = true;
         }
     }
 
-    void EndFeverTime()
+    void TurnOffWarning()
     {
-        isFeverTime = false;
+        isWarningActive = false;
+        safeToTriggerWarning = false; // 이번 터널 경고 임무 끝났으니 비활성화
         if (warningText != null) warningText.gameObject.SetActive(false);
-
-        // 피버타임 끝난 장벽 너머로 다음 일반 장애물 배치 시작 좌표 설정
-        nextSpawnX = player.position.x + 30f;
     }
+
+    void EndFeverTime() { }
 
     public void UpdateScoreFromServer(float score)
     {
