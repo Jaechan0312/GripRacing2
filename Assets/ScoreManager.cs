@@ -33,6 +33,13 @@ public class ScoreManager : MonoBehaviour
         score += amount;
         UpdateScoreUI();
         Debug.Log("점수 획득! 현재 점수: " + score);
+
+        // ⭐ [추가] 점수가 올라갈 때마다 맵에 있는 ObstacleSpawner를 찾아서 점수를 배달합니다.
+        ObstacleSpawner spawner = FindFirstObjectByType<ObstacleSpawner>();
+        if (spawner != null)
+        {
+            spawner.UpdateScoreFromServer(score);
+        }
     }
 
     // UI 글자를 업데이트하는 기능
