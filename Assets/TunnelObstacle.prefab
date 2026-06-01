@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4406309251258569809}
   - component: {fileID: 1145331838530642543}
   m_Layer: 0
-  m_Name: Obstacle
+  m_Name: TunnelObstacle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -83,8 +83,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -930323709418643926, guid: 78d228b60b49f804daa2fcf7f573294e, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 7482667652216324306, guid: 35c8191b958598a49a095dc42e836652, type: 3}
+  m_Color: {r: 0.051886797, g: 0.022027414, b: 0.022027414, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -127,17 +127,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.005914569, y: -0.011829048}
+  m_Offset: {x: 0.005914569, y: -0.0023174882}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.61, y: 1.77}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.6979165, y: 1.8043785}
+  m_Size: {x: 1.0257595, y: 1.0117403}
   m_EdgeRadius: 0
 --- !u!1 &2805343122938771044
 GameObject:
