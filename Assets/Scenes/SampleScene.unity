@@ -1195,7 +1195,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -3.43, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1232,8 +1232,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GripInput
   isTestMode: 1
   dummyForce: 0
---- !u!61 &707584852
-BoxCollider2D:
+--- !u!60 &707584852
+PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1266,7 +1266,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.016446829, y: 0.009028316}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -1276,8 +1276,45 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.4544554, y: 1.8213336}
-  m_EdgeRadius: 0
+  m_Points:
+    m_Paths:
+    - - {x: 1.0583334, y: 0.32500002}
+      - {x: 0.7143534, y: 0.30922636}
+      - {x: 0.62500006, y: 0.7768399}
+      - {x: 0.4180331, y: 0.90370643}
+      - {x: -0.19166668, y: 0.8916667}
+      - {x: -0.47500002, y: 0.87500006}
+      - {x: -0.60833335, y: 0.77500004}
+      - {x: -0.6693046, y: 0.6504726}
+      - {x: -0.6805565, y: 0.36666587}
+      - {x: -0.90833336, y: 0.35833335}
+      - {x: -1.0916667, y: 0.1995266}
+      - {x: -1.1357338, y: -0.04787724}
+      - {x: -1.1423987, y: -0.1979045}
+      - {x: -1.1027598, y: -0.31808692}
+      - {x: -1.215747, y: -0.3564935}
+      - {x: -1.215747, y: -0.5416667}
+      - {x: -1.1083333, y: -0.57500005}
+      - {x: -0.946942, y: -0.5599125}
+      - {x: -0.72867984, y: -0.62639356}
+      - {x: -0.68167406, y: -0.7608036}
+      - {x: -0.5962933, y: -0.83887964}
+      - {x: -0.425, y: -0.90833336}
+      - {x: -0.2916667, y: -0.90833336}
+      - {x: -0.15833335, y: -0.8083334}
+      - {x: -0.09166667, y: -0.675}
+      - {x: 0.3023133, y: -0.6620135}
+      - {x: 0.3208198, y: -0.7868683}
+      - {x: 0.39166668, y: -0.85833335}
+      - {x: 0.5083334, y: -0.90833336}
+      - {x: 0.75415325, y: -0.92639357}
+      - {x: 0.8773627, y: -0.8142856}
+      - {x: 0.96407413, y: -0.6382119}
+      - {x: 1.1916667, y: -0.52500004}
+      - {x: 1.225, y: -0.425}
+      - {x: 1.2304505, y: 0.04805723}
+      - {x: 1.1647999, y: 0.24122037}
+  m_UseDelaunayMesh: 1
 --- !u!1 &993803189
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,8 +12,8 @@ public class CarController2D : MonoBehaviour
     public float glideSpeed = -1.0f;     // 꾹 누르고 있을 때의 낙하 속도
 
     [Header("더블 점프 설정")]
-    public int maxJumps = 2;             // ⭐ 최대 점프 가능 횟수 (2단 점프)
-    private int jumpCount = 0;           // ⭐ 현재 점프한 횟수를 세는 변수
+    public int maxJumps = 2;             // 최대 점프 가능 횟수 (2단 점프)
+    private int jumpCount = 0;           // 현재 점프한 횟수를 세는 변수
 
     [Header("센서 데이터 설정")]
     public float jumpThreshold = 70f;
@@ -26,6 +26,10 @@ public class CarController2D : MonoBehaviour
     private bool exactJumpPressed = false;
     private bool isHolding = false;
     private float lastGripForce = 0f;
+
+    // ⭐ 속도 증가를 위한 새로운 변수들
+    private float currentScore = 0f;     // 현재 점수를 기억할 변수
+    private float currentSpeedMultiplier = 1f; // 현재 속도 배율 (기본 1배)
 
     void Start()
     {
@@ -52,7 +56,6 @@ public class CarController2D : MonoBehaviour
         {
             isGripHold = (grip.CurrentForce >= jumpThreshold);
 
-            // ⭐ [버그 해결 핵심] 테스트 모드일 때는 키보드 꾹 누를 때 발생하는 자동 점프를 막기 위해 악력기 탭을 무시해!
             if (!grip.isTestMode)
             {
                 if (grip.CurrentForce >= jumpThreshold && lastGripForce < jumpThreshold)
@@ -64,14 +67,12 @@ public class CarController2D : MonoBehaviour
         }
 
         // --- 2. 2단 점프 제한 로직 ---
-        // 키보드를 새로 눌렀거나, 진짜 악력기를 콱 쥐었을 때
         if (isKeyTap || isGripTap)
         {
-            // 아직 최대 점프 횟수(2번)에 도달하지 않았다면 점프 허용!
             if (jumpCount < maxJumps)
             {
                 exactJumpPressed = true;
-                jumpCount++; // 점프 횟수 증가
+                jumpCount++;
             }
         }
 
@@ -82,14 +83,20 @@ public class CarController2D : MonoBehaviour
     {
         if (Time.timeScale > 0f)
         {
-            // 1. 앞으로 달리기 (X축 속도 고정)
-            rb.linearVelocity = new Vector2(moveSpeed, rb.linearVelocity.y);
+            // ⭐ 1. 점수별 속도 배율 계산 (10점마다 10%씩 증가)
+            // ex) 0~9점 = 1.0배 / 10~19점 = 1.1배 / 20~29점 = 1.2배 ...
+            int scoreInterval = Mathf.FloorToInt(currentScore / 10f);
+            currentSpeedMultiplier = 1f + (scoreInterval * 0.1f);
+
+            // 최종 속도 = 기본 속도 * 배율
+            float finalMoveSpeed = moveSpeed * currentSpeedMultiplier;
+
+            // 앞으로 달리기 (최종 속도 적용)
+            rb.linearVelocity = new Vector2(finalMoveSpeed, rb.linearVelocity.y);
 
             // 2. 점프 처리
             if (exactJumpPressed)
             {
-                // ⭐ 2단 점프할 때 기존에 떨어지던 속도가 있으면 점프가 씹히는 느낌이 나므로, 
-                // Y축 속도를 순간적으로 0으로 초기화한 뒤 점프력을 줘야 2단 점프가 아주 청량하게 잘 뛰어져!
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
                 exactJumpPressed = false;
             }
@@ -114,9 +121,14 @@ public class CarController2D : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+    // ⭐ 외부(점수 매니저 등)에서 점수가 오를 때마다 이 함수를 찔러주면 실시간으로 속도에 반영돼!
+    public void UpdateScore(float score)
+    {
+        currentScore = score;
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // ⭐ 바닥(Ground)에 닿으면 점프 횟수를 다시 0으로 초기화!
         if (collision.gameObject.name.Contains("Ground"))
         {
             isGrounded = true;
