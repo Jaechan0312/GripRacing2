@@ -26,7 +26,8 @@ public class ObstacleSpawner : MonoBehaviour
     [Header("장애물 공중 부양 설정")]
     public float floatingOffset = 0.5f;
 
-    public float destroyDelay = 15f;
+    // ⭐ 기존 15초에서 인스펙터 기본값을 4초로 하향 조정 (렉 방지)
+    public float destroyDelay = 4f;
 
     [Header("⭐ 터널 설정 (가운데 통로 공간)")]
     public float tunnelBottomY = 1.0f;  // 통로 바닥
@@ -40,7 +41,6 @@ public class ObstacleSpawner : MonoBehaviour
     private bool isFeverTime = false;
     private float currentScore = 0f;
 
-    // 일반 장애물 연속 생성 카운트 변수
     private int obstaclesSpawnedSinceLastTunnel = 0;
 
     private float tunnelStartX = 0f;
@@ -58,22 +58,18 @@ public class ObstacleSpawner : MonoBehaviour
 
         if (warningText != null) warningText.gameObject.SetActive(false);
 
-        // 시작할 때는 일반 장애물 카운트를 0으로 초기화
         obstaclesSpawnedSinceLastTunnel = 0;
         DecideNextObstacleType();
     }
 
     void DecideNextObstacleType()
     {
-        // ⭐ [3번 요구사항 천장 시스템 구현] 
-        // 만약 일반 장애물이 연속으로 7번 이상 나왔다면, 주사위 안 굴리고 무조건 터널 확정!
         if (obstaclesSpawnedSinceLastTunnel >= 7)
         {
             isNextObstacleTunnel = true;
             return;
         }
 
-        // 7번 연속 안 나왔을 때는 지정한 확률(20%)로 터널 생성 결정
         if (Random.value < tunnelChance)
         {
             isNextObstacleTunnel = true;
@@ -121,7 +117,7 @@ public class ObstacleSpawner : MonoBehaviour
     {
         SpawnObstacle();
 
-        obstaclesSpawnedSinceLastTunnel++; // 일반 장애물 나왔으니 카운트 +1
+        obstaclesSpawnedSinceLastTunnel++;
         precedingObstacleX = nextSpawnX;
 
         float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
@@ -141,6 +137,7 @@ public class ObstacleSpawner : MonoBehaviour
         GameObject tempObstacle = Instantiate(normalObstaclePrefab, spawnPos, Quaternion.identity);
         tempObstacle.transform.localScale = new Vector3(normalObstacleWidth, randomHeight, tempObstacle.transform.localScale.z);
 
+        // 정해진 딜레이 뒤에 파괴
         Destroy(tempObstacle, destroyDelay);
     }
 
@@ -148,7 +145,7 @@ public class ObstacleSpawner : MonoBehaviour
     {
         isFeverTime = true;
         isNextObstacleTunnel = false;
-        obstaclesSpawnedSinceLastTunnel = 0; // ⭐ 터널 소환했으니 연속 카운트 초기화!
+        obstaclesSpawnedSinceLastTunnel = 0;
 
         float spawnXPosition = nextSpawnX;
         tunnelStartX = spawnXPosition;
@@ -162,7 +159,9 @@ public class ObstacleSpawner : MonoBehaviour
 
         GameObject bottomWall = Instantiate(tunnelObstaclePrefab, bottomPos, Quaternion.identity);
         bottomWall.transform.localScale = new Vector3(tunnelLength, bottomWallHeight, bottomWall.transform.localScale.z);
-        Destroy(bottomWall, destroyDelay);
+
+        // ⭐ 터널 장벽은 길이가 길기 때문에 완전히 통과한 직후(예: 6~7초) 지워지도록 개별 세팅 보완
+        Destroy(bottomWall, destroyDelay + 3f);
 
         float topWallHeight = 10f;
         float topWallCenterY = tunnelTopY + (topWallHeight / 2f);
@@ -170,7 +169,9 @@ public class ObstacleSpawner : MonoBehaviour
 
         GameObject topWall = Instantiate(tunnelObstaclePrefab, topPos, Quaternion.identity);
         topWall.transform.localScale = new Vector3(tunnelLength, topWallHeight, topWall.transform.localScale.z);
-        Destroy(topWall, destroyDelay);
+
+        // ⭐ 위쪽 벽도 동일하게 동시 파괴 처리
+        Destroy(topWall, destroyDelay + 3f);
 
         float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
         nextSpawnX = tunnelEndX + randomDistance;
