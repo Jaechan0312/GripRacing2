@@ -1365,13 +1365,10 @@ RectTransform:
   - {fileID: 491005856}
   - {fileID: 1736958150}
   - {fileID: 301118987}
-<<<<<<< HEAD
   - {fileID: 491005856}
   - {fileID: 2024212286}
   - {fileID: 1659211013}
   - {fileID: 740031223}
-=======
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

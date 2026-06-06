@@ -435,13 +435,10 @@ RectTransform:
   m_Children:
   - {fileID: 2014372923}
   - {fileID: 542956135}
-<<<<<<< HEAD
   - {fileID: 1476224919}
   - {fileID: 507723383}
   - {fileID: 400387836}
-=======
   - {fileID: 848744121}
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

@@ -725,13 +725,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 499e681a841cfba4d8997666e5bd17a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleSpawner
-<<<<<<< HEAD
   obstaclePrefab: {fileID: 1585731743620478076, guid: 0bde1f9c3a73cca4d9a7d7cfc3266e40, type: 3}
   tunnelWallPrefab: {fileID: 5970299871662068447, guid: 6c01495b3eb529443bc379ce0b46bdc2, type: 3}
-=======
   normalObstaclePrefab: {fileID: 2453536942600923599, guid: 0bde1f9c3a73cca4d9a7d7cfc3266e40, type: 3}
   tunnelObstaclePrefab: {fileID: 2453536942600923599, guid: f13914c703edc48479c5640943417764, type: 3}
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
   player: {fileID: 707584849}
   warningText: {fileID: 1964963015}
   normalObstacleSprite: {fileID: 0}
@@ -739,13 +736,11 @@ MonoBehaviour:
   minSpawnDistance: 13
   maxSpawnDistance: 23
   minHeight: 1
-<<<<<<< HEAD
   maxHeight: 4.2
   groundY: -3
   destroyDelay: 15
   tunnelBottomY: 1
   tunnelTopY: 4.5
-=======
   maxHeight: 3
   normalObstacleWidth: 1.2
   groundY: -4.4
@@ -753,7 +748,6 @@ MonoBehaviour:
   destroyDelay: 15
   tunnelBottomY: -0.5
   tunnelTopY: 3
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
   tunnelLength: 15
   tunnelChance: 0.075
   precedingObstacleX: -999
@@ -1192,13 +1186,10 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-<<<<<<< HEAD
   m_Sprite: {fileID: 6987461367524316340, guid: ecf371425ca25704abf10c584991665c, type: 3}
   m_Color: {r: 0.7, g: 0.7, b: 0.7, a: 1}
-=======
   m_Sprite: {fileID: 21300000, guid: cd32f6e638b5a3c4a8b8e8cc7869c841, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -1295,11 +1286,8 @@ PolygonCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-<<<<<<< HEAD
     oldSize: {x: 1.46, y: 1.1}
-=======
     oldSize: {x: 3.7833333, y: 3.7833333}
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -1307,7 +1295,6 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-<<<<<<< HEAD
     - - {x: 0.71999997, y: 0.099999994}
       - {x: 0.65999997, y: 0.17}
       - {x: 0.63, y: 0.17999999}
@@ -1476,7 +1463,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 923884520}
   m_CullTransparentMesh: 1
-=======
     - - {x: 1.0583334, y: 0.32500002}
       - {x: 0.7143534, y: 0.30922636}
       - {x: 0.62500006, y: 0.7768399}
@@ -1514,7 +1500,6 @@ CanvasRenderer:
       - {x: 1.2304505, y: 0.04805723}
       - {x: 1.1647999, y: 0.24122037}
   m_UseDelaunayMesh: 1
->>>>>>> 8a3584a4b644f1d194b008df11f6b8ea27f2fcc9
 --- !u!1 &993803189
 GameObject:
   m_ObjectHideFlags: 0
