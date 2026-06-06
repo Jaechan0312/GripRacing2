@@ -36,7 +36,6 @@ public class ScoreManager : MonoBehaviour
         ObstacleSpawner spawner = FindFirstObjectByType<ObstacleSpawner>();
         if (spawner != null)
         {
-            // 주의: ObstacleSpawner 클래스 내부에 UpdateScore 메서드가 구현되어 있어야 합니다.
             spawner.UpdateScore(score);
         }
 
