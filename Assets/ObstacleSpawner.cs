@@ -4,25 +4,34 @@ using TMPro;
 
 public class ObstacleSpawner : MonoBehaviour
 {
-    public GameObject obstaclePrefab; // 프리팹 연결
+    [Header("장애물 프리팹 분리 설정")]
+    public GameObject normalObstaclePrefab; // 일반 장애물 (꼬깔콘/나무 등)
+    public GameObject tunnelObstaclePrefab; // 터널 장벽용 (가드레일/안전펜스 등)
+
     public Transform player;          // 플레이어 위치
     public TextMeshProUGUI warningText; // "주의" 문구 UI 연결 칸
+
+    [Header("⭐ 장애물 이미지(스프라이트) 설정")]
+    public Sprite normalObstacleSprite; // 일반 장애물에 들어갈 이미지
+    public Sprite tunnelWallSprite;     // 터널 장벽(위/아래)에 들어갈 이미지
 
     [Header("장애물 생성 간격 설정")]
     public float minSpawnDistance = 13f;
     public float maxSpawnDistance = 23f;
 
-    [Header("장애물 크기(높이) 설정")]
+    [Header("⭐ 일반 장애물 크기(높이/너비) 설정")]
     public float minHeight = 1.0f;
     public float maxHeight = 4.0f;
+    public float normalObstacleWidth = 1.0f;
 
     [Header("바닥 기준 좌표")]
     public float groundY = -2.45f;
-    public float destroyDelay = 15f;
 
-    [Header("등척성 피버 타임 설정")]
-    public float feverStartScore = 15f; // 레거시 유지
-    public float feverDuration = 10f;   // 레거시 유지
+    [Header("장애물 공중 부양 설정")]
+    public float floatingOffset = 0.5f;
+
+    [Tooltip("기존 15초에서 인스펙터 기본값을 4초로 하향 조정 (렉 방지)")]
+    public float destroyDelay = 4f;
 
     [Header("⭐ 터널 설정 (가운데 통로 공간)")]
     public float tunnelBottomY = 1.0f;  // 통로 바닥
@@ -30,27 +39,25 @@ public class ObstacleSpawner : MonoBehaviour
     public float tunnelLength = 40f;    // 터널 가로 길이
 
     [Range(0f, 1f)]
-    public float tunnelChance = 0.25f;  // 터널이 등장할 기본 확률 (25%)
+    public float tunnelChance = 0.2f;   // 터널이 등장할 기본 확률
 
     private float nextSpawnX;
     private bool isFeverTime = false;
-    private float feverTimer = 0f;            // 레거시 유지
-    private float currentScore = 0f;          // 레거시 유지
-    private bool hasSpawnedFeverWall = false; // 레거시 유지
+    private float currentScore = 0f;
 
-    // 일반 장애물 연속 생성 카운트 변수
-    private int normalObstacleCount = 0;
+    private int obstaclesSpawnedSinceLastTunnel = 0;
 
-    // 터널 위치 체크용 변수
-    private float tunnelStartX = 0f;      // 터널이 시작되는 실제 X 좌표
-    private float tunnelEndX = 0f;        // 터널이 끝나는 실제 X 좌표
-    private bool isWarningActive = false;  // 현재 워닝 문구가 켜져 있는지 여부
+    private float tunnelStartX = 0f;
+    private float tunnelEndX = 0f;
+    private bool isWarningActive = false;
 
-    private bool isNextObstacleTunnel = false; // "다음번에 터널을 깔아라"는 미리 결정된 예약 신호
-    private float precedingObstacleX = -999f;  // 터널 바로 전 장애물의 X 좌표
+    private bool isNextObstacleTunnel = false;
 
-    // ⭐ 타이밍 버그 해결을 위한 경고 대기 플래그
+    // 💡 [중요] CarController2D가 실시간 점수 체크를 위해 접근할 수 있도록 public으로 복구 및 유지합니다.
+    [HideInInspector] public float precedingObstacleX = -999f;
+
     private bool safeToTriggerWarning = false;
+    private float warningStartX = -999f; // 💡 경고 문구를 켜기 시작할 정확한 플레이어 위치 기준점
 
     void Start()
     {
@@ -59,12 +66,19 @@ public class ObstacleSpawner : MonoBehaviour
 
         if (warningText != null) warningText.gameObject.SetActive(false);
 
+        obstaclesSpawnedSinceLastTunnel = 0;
         DecideNextObstacleType();
     }
 
     void DecideNextObstacleType()
     {
-        if (normalObstacleCount >= 7 || Random.value < tunnelChance)
+        if (obstaclesSpawnedSinceLastTunnel >= 7)
+        {
+            isNextObstacleTunnel = true;
+            return;
+        }
+
+        if (Random.value < tunnelChance)
         {
             isNextObstacleTunnel = true;
         }
@@ -76,32 +90,30 @@ public class ObstacleSpawner : MonoBehaviour
 
     void Update()
     {
-        // ⭐ 1. 워닝 경고문 타이밍 실시간 체크 (구조 개선)
+        // ⭐ [경고창 켜고 끄기 로직 완벽 보완]
         if (safeToTriggerWarning)
         {
-            // [켜기 조건] 아직 경고문이 안 켜졌고, 플레이어가 '전 장애물 X 위치'를 통과하는 바로 그 순간!
-            if (!isWarningActive && player.position.x >= precedingObstacleX)
+            // 1. 플레이어가 경고 시작 지점(이전 장애물을 지난 시점)을 넘으면 WARNING 켜기
+            if (!isWarningActive && player.position.x >= warningStartX)
             {
                 TurnOnWarning();
             }
 
-            // [끄기 조건] 경고문이 켜져 있고, 플레이어가 '터널 입구 X 위치'에 도달한 순간!
+            // 2. 플레이어가 드디어 터널 입구(tunnelStartX)에 완전히 진입하면 WARNING 끄기
             if (isWarningActive && player.position.x >= tunnelStartX)
             {
                 TurnOffWarning();
             }
         }
 
-        // 2. 피버 타임 종료 체크
         if (isFeverTime && player.position.x >= tunnelEndX)
         {
             isFeverTime = false;
         }
 
-        // 3. 장애물 생성 루프
         if (player.position.x > nextSpawnX - 30f)
         {
-            if (isNextObstacleTunnel)
+            if (isNextObstacleTunnel && tunnelObstaclePrefab != null)
             {
                 SpawnLongTunnelWall();
             }
@@ -116,10 +128,8 @@ public class ObstacleSpawner : MonoBehaviour
     {
         SpawnObstacle();
 
-        normalObstacleCount++;
-
-        // 직전 장애물의 위치를 기억해 둠
-        precedingObstacleX = nextSpawnX;
+        obstaclesSpawnedSinceLastTunnel++;
+        precedingObstacleX = nextSpawnX; // 일반 장애물의 통과 기준 x좌표 저장
 
         float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
         nextSpawnX += randomDistance;
@@ -129,48 +139,93 @@ public class ObstacleSpawner : MonoBehaviour
 
     void SpawnObstacle()
     {
+        if (normalObstaclePrefab == null) return;
+
         float randomHeight = Random.Range(minHeight, maxHeight);
-        float spawnY = groundY + (randomHeight / 2f);
+        float spawnY = groundY + (randomHeight / 2f) + floatingOffset;
         Vector3 spawnPos = new Vector3(nextSpawnX, spawnY, 0);
 
-        GameObject tempObstacle = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity);
-        Vector3 currentScale = tempObstacle.transform.localScale;
-        tempObstacle.transform.localScale = new Vector3(currentScale.x, randomHeight, currentScale.z);
+        GameObject tempObstacle = Instantiate(normalObstaclePrefab, spawnPos, Quaternion.identity);
+        tempObstacle.transform.localScale = new Vector3(normalObstacleWidth, randomHeight, tempObstacle.transform.localScale.z);
 
+        // 이미지(스프라이트) 적용 기능 유지
+        if (normalObstacleSprite != null)
+        {
+            SpriteRenderer[] srs = tempObstacle.GetComponentsInChildren<SpriteRenderer>();
+            foreach (SpriteRenderer sr in srs)
+            {
+                sr.sprite = normalObstacleSprite;
+            }
+        }
+
+        // 정해진 딜레이 뒤에 파괴 (렉 방지)
         Destroy(tempObstacle, destroyDelay);
     }
 
     void SpawnLongTunnelWall()
     {
-        StartFeverTime();
-
+        isFeverTime = true;
         isNextObstacleTunnel = false;
-        normalObstacleCount = 0;
+        obstaclesSpawnedSinceLastTunnel = 0;
+
+        // 💡 경고 문구를 켜기 시작할 정확한 위치를 "이전 장애물 통과 기준점"으로 강제 지정합니다.
+        warningStartX = precedingObstacleX;
 
         float spawnXPosition = nextSpawnX;
         tunnelStartX = spawnXPosition;
         tunnelEndX = spawnXPosition + tunnelLength;
 
-        // ⭐ 터널이 미리 스폰되었으니, 이제 플레이어가 전 장애물을 지나갈 때 경고를 띄우라고 신호를 보냄!
+        // 터널이 시작되는 '입구 지점'을 플레이어 통과 및 점수 획득 기준으로 설정
+        precedingObstacleX = tunnelStartX;
+
+        // ⭐ 장벽 생성 처리가 완전히 끝났으므로 경고 추적 플래그 가동
         safeToTriggerWarning = true;
 
-        // 1. 아래쪽 연속 장벽
+        // 사용할 프리팹 결정 (분리된 전용 프리팹이 없다면 일반용 백업 사용)
+        GameObject wallPrefabToUse = (tunnelObstaclePrefab != null) ? tunnelObstaclePrefab : normalObstaclePrefab;
+
+        // 1. 아래쪽 연속 터널 장벽 생성
         float bottomWallHeight = Mathf.Abs(tunnelBottomY - groundY);
         float bottomWallCenterY = groundY + (bottomWallHeight / 2f);
         Vector3 bottomPos = new Vector3(spawnXPosition + (tunnelLength / 2f), bottomWallCenterY, 0);
 
-        GameObject bottomWall = Instantiate(obstaclePrefab, bottomPos, Quaternion.identity);
+        GameObject bottomWall = Instantiate(wallPrefabToUse, bottomPos, Quaternion.identity);
         bottomWall.transform.localScale = new Vector3(tunnelLength, bottomWallHeight, bottomWall.transform.localScale.z);
-        Destroy(bottomWall, destroyDelay);
+        bottomWall.name = "TunnelWall_Bottom";
 
-        // 2. 위쪽 연속 장벽
+        // 스프라이트 적용 및 검은색 색상 처리
+        SpriteRenderer[] bottomSRs = bottomWall.GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer sr in bottomSRs)
+        {
+            if (tunnelWallSprite != null) sr.sprite = tunnelWallSprite;
+            sr.color = Color.black;
+            sr.drawMode = SpriteDrawMode.Simple;
+        }
+
+        UpdateColliderSize(bottomWall);
+        // ⭐ 터널 장벽은 길이가 길기 때문에 완전히 통과한 직후(렉 방지 하향 수치 + 여유분) 지워지도록 개별 세팅 보완
+        Destroy(bottomWall, destroyDelay + 3f);
+
+        // 2. 위쪽 연속 터널 장벽 생성
         float topWallHeight = 10f;
         float topWallCenterY = tunnelTopY + (topWallHeight / 2f);
         Vector3 topPos = new Vector3(spawnXPosition + (tunnelLength / 2f), topWallCenterY, 0);
 
-        GameObject topWall = Instantiate(obstaclePrefab, topPos, Quaternion.identity);
+        GameObject topWall = Instantiate(wallPrefabToUse, topPos, Quaternion.identity);
         topWall.transform.localScale = new Vector3(tunnelLength, topWallHeight, topWall.transform.localScale.z);
-        Destroy(topWall, destroyDelay);
+        topWall.name = "TunnelWall_Top";
+
+        SpriteRenderer[] topSRs = topWall.GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer sr in topSRs)
+        {
+            if (tunnelWallSprite != null) sr.sprite = tunnelWallSprite;
+            sr.color = Color.black;
+            sr.drawMode = SpriteDrawMode.Simple;
+        }
+
+        UpdateColliderSize(topWall);
+        // ⭐ 위쪽 벽도 동일하게 동시 파괴 처리
+        Destroy(topWall, destroyDelay + 3f);
 
         float randomDistance = Random.Range(minSpawnDistance, maxSpawnDistance);
         nextSpawnX = tunnelEndX + randomDistance;
@@ -178,11 +233,15 @@ public class ObstacleSpawner : MonoBehaviour
         DecideNextObstacleType();
     }
 
-    void StartFeverTime()
+    // 자식 컴포넌트의 BoxCollider2D 크기를 스케일에 맞춰 1로 초기화해주는 유틸 기능 복구
+    void UpdateColliderSize(GameObject target)
     {
-        isFeverTime = true;
-        feverTimer = feverDuration;
-        hasSpawnedFeverWall = false;
+        BoxCollider2D boxCol = target.GetComponentInChildren<BoxCollider2D>();
+        if (boxCol != null)
+        {
+            boxCol.size = Vector2.one;
+            boxCol.offset = Vector2.zero;
+        }
     }
 
     void TurnOnWarning()
@@ -198,13 +257,12 @@ public class ObstacleSpawner : MonoBehaviour
     void TurnOffWarning()
     {
         isWarningActive = false;
-        safeToTriggerWarning = false; // 이번 터널 경고 임무 끝났으니 비활성화
+        safeToTriggerWarning = false;
         if (warningText != null) warningText.gameObject.SetActive(false);
     }
 
-    void EndFeverTime() { }
-
-    public void UpdateScoreFromServer(float score)
+    // 외부 연동용 점수 업데이트 메서드 명칭 통일
+    public void UpdateScore(float score)
     {
         currentScore = score;
     }

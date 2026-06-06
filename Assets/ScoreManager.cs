@@ -1,24 +1,22 @@
 using UnityEngine;
-using TMPro; // TextMeshPro를 사용하기 위해 꼭 필요!
+using TMPro;
 
 public class ScoreManager : MonoBehaviour
 {
-    // 어디서든 "ScoreManager.Instance"로 접근할 수 있게 해주는 마법의 코드
     public static ScoreManager Instance;
 
-    public TextMeshProUGUI scoreText; // 연결할 UI 텍스트
-    private int score = 0;           // 실제 점수 저장
+    public TextMeshProUGUI scoreText; // UI 텍스트 연결
+    private int score = 0;           // 현재 점수
 
     void Awake()
     {
-        // 게임 시작하자마자 나 자신을 Instance에 등록 (강제 활성화)
         if (Instance == null)
         {
             Instance = this;
         }
         else
         {
-            Destroy(gameObject); // 혹시라도 두 개 있으면 하나 삭제
+            Destroy(gameObject);
         }
     }
 
@@ -34,11 +32,19 @@ public class ScoreManager : MonoBehaviour
         UpdateScoreUI();
         Debug.Log("점수 획득! 현재 점수: " + score);
 
-        // ⭐ [추가] 점수가 올라갈 때마다 맵에 있는 ObstacleSpawner를 찾아서 점수를 배달합니다.
+        // 1. 장애물 생성기(ObstacleSpawner)를 찾아서 실시간 점수를 전달합니다.
         ObstacleSpawner spawner = FindFirstObjectByType<ObstacleSpawner>();
         if (spawner != null)
         {
-            spawner.UpdateScoreFromServer(score);
+            // 주의: ObstacleSpawner 클래스 내부에 UpdateScore 메서드가 구현되어 있어야 합니다.
+            spawner.UpdateScore(score);
+        }
+
+        // 2. 자동차(CarController2D)를 찾아서 실시간 점수를 전달합니다.
+        CarController2D car = FindFirstObjectByType<CarController2D>();
+        if (car != null)
+        {
+            car.UpdateScore(score);
         }
     }
 

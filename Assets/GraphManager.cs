@@ -1,83 +1,189 @@
-using UnityEngine;
-using TMPro;
+ï»¿using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 public class GraphManager : MonoBehaviour
 {
     [Header("UI & Object References")]
-    public TextMeshProUGUI weightText; // "Grip Strength" ÅØ½ºÆ®
-    public LineRenderer lineRenderer;  // ±×·¡ÇÁ¸¦ ±×¸± ¶óÀÎ ·»´õ·¯
+    public TextMeshProUGUI weightText;
+
+    // ğŸ’¡ [ìˆ˜ì •] ë‹¨ìˆœ ê¸€ì”¨ í‘œì‹œìš© Text ëŒ€ì‹ , ì‚¬ìš©ìê°€ ì§ì ‘ íƒ€ì´í•‘í•  ìˆ˜ ìˆëŠ” ì¸í’‹ í•„ë“œë¡œ ë³€ê²½í•©ë‹ˆë‹¤.
+    public TMP_InputField maxWeightInputField;
+
+    public LineRenderer lineRenderer;
 
     [Header("Graph Settings")]
-    public int maxPoints = 50;         // È­¸é¿¡ Ç¥½ÃµÉ ÃÖ´ë Á¡ °³¼ö
-    public float pointSpacing = 10f;   // Á¡ »çÀÌÀÇ °¡·Î °£°İ
-    public float heightMultiplier = 5f;// µ¥ÀÌÅÍ °ª¿¡ µû¸¥ ¼¼·Î ³ôÀÌ ¹èÀ²
-    public float updateInterval = 0.2f;// µ¥ÀÌÅÍ °»½Å ÁÖ±â (0.2ÃÊ)
+    [Tooltip("í™”ë©´ì— ì±„ìš¸ ì ì˜ ìµœëŒ€ ê°œìˆ˜ì…ë‹ˆë‹¤.")]
+    public int maxPoints = 100;
+
+    [Tooltip("ê·¸ë˜í”„ ì ì´ ì¶”ê°€ë˜ëŠ” ì£¼ê¸°(ì´ˆ)ì…ë‹ˆë‹¤. ì´ ê°’ì„ ëŠ˜ë¦¬ë©´ ê·¸ë˜í”„ê°€ ëŠë ¤ì§‘ë‹ˆë‹¤.")]
+    public float graphUpdateInterval = 0.1f;
+
+    [Header("3D World Boundary Settings")]
+    public float leftEdgeX = -7.5f;
+    public float rightEdgeX = 7.5f;
+    public float bottomEdgeY = -4.2f;
+    public float topEdgeY = 4.5f;
 
     private List<float> dataPoints = new List<float>();
-    private float timer = 0f;
+    private float timeSinceLastUpdate = 0f;
+
+    private float peakGripKg = 0f;
+
+    void OnEnable()
+    {
+        dataPoints.Clear();
+        if (lineRenderer != null) lineRenderer.positionCount = 0;
+        if (weightText != null) weightText.text = "Grip Strength : 0.0 kg";
+
+        timeSinceLastUpdate = 0f;
+
+        // ë‹¤ë¥¸ ì”¬ì— ê°”ë‹¤ ì™”ì„ ë•Œ ì „ì—­ ì•ˆì „ ê¸ˆê³ ì—ì„œ ìµœê³  ê¸°ë¡ì„ ë³µêµ¬í•©ë‹ˆë‹¤.
+        if (GripReceiver.Instance != null && GripReceiver.Instance.maxGripRecordKg > 0f)
+        {
+            peakGripKg = GripReceiver.Instance.maxGripRecordKg;
+        }
+        else
+        {
+            peakGripKg = 0f;
+        }
+
+        UpdateMaxWeightText();
+    }
 
     void Start()
     {
-        // ½ÃÀÛ ½Ã ¶óÀÎ ·»´õ·¯ ÃÊ±âÈ­
-        if (lineRenderer != null)
+        if (lineRenderer != null) lineRenderer.positionCount = 0;
+
+        // ğŸ’¡ [ìƒˆë¡œ ì¶”ê°€] ì¸ìŠ¤í™í„°ì— ì—°ê²°ëœ ì¸í’‹ í•„ë“œê°€ ìˆë‹¤ë©´, ì‚¬ìš©ìê°€ í‚¤ë³´ë“œë¡œ íƒ€ì´í•‘ì„ ì¹  ë•Œë§ˆë‹¤ ì‹¤ì‹œê°„ ê°ì‹œí•˜ëŠ” ì´ë²¤íŠ¸ ì—°ê²°
+        if (maxWeightInputField != null)
         {
-            lineRenderer.positionCount = 0;
-            // ÆÁ: ¿©±â¼­ MaterialÀÌ ¾ø´Ù¸é ÄÚµå·Î ±âº» ¸ÓÆ¼¸®¾óÀ» ÇÒ´çÇÒ ¼öµµ ÀÖ½À´Ï´Ù.
+            maxWeightInputField.onValueChanged.AddListener(OnMaxWeightInputChanged);
         }
     }
 
     void Update()
     {
-        // µ¨Å¸ Å¸ÀÓÀ» ´õÇØ Å¸ÀÌ¸Ó °è»ê
-        timer += Time.deltaTime;
+        if (GripReceiver.Instance == null) return;
+        if (!GripReceiver.Instance.isMeasuring) return;
+        if (GripReceiver.Instance.isPaused) return;
 
-        // ¼³Á¤ÇÑ ÁÖ±â(0.2ÃÊ)°¡ Áö³ª¸é ½ÇÇà
-        if (timer >= updateInterval)
+        // í…ìŠ¤íŠ¸ UI ì—…ë°ì´íŠ¸ (ì‹¤ì‹œê°„ ë°˜ì˜)
+        float currentKg = GripReceiver.Instance.ConvertedGripKg;
+        if (weightText != null)
         {
-            float currentData = GenerateFakeData();
+            weightText.text = $"Grip Strength : {currentKg:F1} kg";
+        }
 
-            // 1. ¼öÄ¡ ÅØ½ºÆ® ¾÷µ¥ÀÌÆ®
-            if (weightText != null)
+        // [ì‹¤ì‹œê°„ ìµœê³ ì¹˜ ê²€ì‚¬] í˜„ì¬ ì•…ë ¥ì´ ê¸°ì¡´ ìµœê³ ì¹˜ë³´ë‹¤ ë†’ìœ¼ë©´ ì‹¤ì‹œê°„ ê°±ì‹ 
+        if (currentKg > peakGripKg)
+        {
+            peakGripKg = currentKg;
+            UpdateMaxWeightText();
+
+            // ì¸¡ì •í•œ ìµœê³  ì•…ë ¥ ë°ì´í„°ë¥¼ ì „ì—­ ìˆ˜ì‹ ê¸°ì— ì‹¤ì‹œê°„ìœ¼ë¡œ ë°±ì—… ë³´ê´€í•©ë‹ˆë‹¤.
+            GripReceiver.Instance.maxGripRecordKg = peakGripKg;
+        }
+
+        bool hasNewData = false;
+        if (GripReceiver.Instance.isNewDataArrived)
+        {
+            GripReceiver.Instance.isNewDataArrived = false;
+            hasNewData = true;
+        }
+
+        timeSinceLastUpdate += Time.deltaTime;
+
+        if (timeSinceLastUpdate >= graphUpdateInterval)
+        {
+            timeSinceLastUpdate = 0f;
+
+            if (hasNewData || currentKg > 0f)
             {
-                weightText.text = $"Grip Strength : {currentData:F1} kg";
+                UpdateGraph(currentKg);
             }
-
-            // 2. ±×·¡ÇÁ ¼± ¾÷µ¥ÀÌÆ®
-            UpdateGraph(currentData);
-
-            // Å¸ÀÌ¸Ó ÃÊ±âÈ­
-            timer = 0f;
         }
     }
 
-    // Å×½ºÆ®¿ë ·£´ı µ¥ÀÌÅÍ »ı¼º (³ªÁß¿¡ ¾ÆµÎÀÌ³ë °ªÀ¸·Î ±³Ã¼µÉ ºÎºĞ)
-    float GenerateFakeData()
+    // ğŸ’¡ [ìƒˆë¡œ ì¶”ê°€ëœ í•µì‹¬ 60 ì œí•œ ìˆ˜ë™ ì…ë ¥ ê³µì‹] ì‚¬ìš©ìê°€ í‚¤ë³´ë“œë¡œ í…ìŠ¤íŠ¸ë¥¼ ì…ë ¥í•  ë•Œ ì‹¤í–‰ë©ë‹ˆë‹¤.
+    private void OnMaxWeightInputChanged(string text)
     {
-        return Random.Range(5f, 45f);
+        if (float.TryParse(text, out float inputVal))
+        {
+            // ğŸš¨ 60 ì œí•œ ì˜ˆì™¸ ì²˜ë¦¬ ê³µì‹ ì ìš©
+            if (inputVal > 60f)
+            {
+                inputVal = 60f; // 60ì„ ì´ˆê³¼í•˜ë©´ 60ìœ¼ë¡œ ê°€ë‘¡ë‹ˆë‹¤.
+
+                // ì¸í’‹ í•„ë“œ ê¸€ì”¨ ì°½ë„ ê°•ì œë¡œ "60" í˜¹ì€ "60.0"ìœ¼ë¡œ ì •ì •í•´ ì¤ë‹ˆë‹¤.
+                maxWeightInputField.text = "60.0";
+            }
+
+            peakGripKg = inputVal;
+
+            // ìˆ˜ë™ ì…ë ¥í•œ ê°’ì„ ìë™ì°¨ ì”¬ì—ì„œë„ ì ìš©í•  ìˆ˜ ìˆê²Œ ì „ì—­ ì €ì¥ì†Œì— ì‹¤ì‹œê°„ ì£¼ì…í•©ë‹ˆë‹¤.
+            if (GripReceiver.Instance != null)
+            {
+                GripReceiver.Instance.maxGripRecordKg = peakGripKg;
+            }
+
+            Debug.Log($"âŒ¨ï¸ [ìˆ˜ë™ ì…ë ¥ ë³€ê²½] ìµœëŒ€ ì•…ë ¥ì´ ì‚¬ìš©ìì— ì˜í•´ {peakGripKg:F1}kgìœ¼ë¡œ ì„¸íŒ…ë˜ì—ˆìŠµë‹ˆë‹¤.");
+        }
+    }
+
+    // ë¦¬ì…‹ ë²„íŠ¼ì„ ë§ˆìš°ìŠ¤ë¡œ ì§ì ‘ ëˆ„ë¥¼ ë•Œ ëª¨ë“  ê¸°ë¡ì´ 0ìœ¼ë¡œ ë°€ë¦½ë‹ˆë‹¤.
+    public void ResetPeakGrip()
+    {
+        peakGripKg = 0f;
+        UpdateMaxWeightText();
+
+        if (GripReceiver.Instance != null)
+        {
+            GripReceiver.Instance.maxGripRecordKg = 0f;
+        }
+
+        Debug.Log("ğŸ§¹ [GraphManager] ì‚¬ìš©ìì˜ ë¦¬ì…‹ ìš”ì²­ìœ¼ë¡œ ìµœê³  ì•…ë ¥ ê¸°ë¡ì„ ì´ˆê¸°í™” ì™„ë£Œí–ˆìŠµë‹ˆë‹¤!");
+    }
+
+    // í…ìŠ¤íŠ¸ ê°€ë…ì„±ì„ ìœ„í•œ ì¸í’‹ í•„ë“œ ë‚´ìš© ê°±ì‹  í•¨ìˆ˜
+    private void UpdateMaxWeightText()
+    {
+        if (maxWeightInputField != null)
+        {
+            // ì¸í’‹ í•„ë“œ ê¸€ì ì¹¸ì— ìµœê³  ì•…ë ¥ì„ ì†Œìˆ˜ì  ì²«ì§¸ ìë¦¬ê¹Œì§€ í‘œê¸°í•©ë‹ˆë‹¤.
+            maxWeightInputField.text = peakGripKg.ToString("F1");
+        }
     }
 
     void UpdateGraph(float newValue)
     {
         if (lineRenderer == null) return;
 
-        dataPoints.Add(newValue);
+        dataPoints.Insert(0, newValue);
 
-        // µ¥ÀÌÅÍ°¡ ÃÖ´ë °³¼ö¸¦ ³ÑÀ¸¸é °¡Àå ¿À·¡µÈ °Í »èÁ¦
         if (dataPoints.Count > maxPoints)
         {
-            dataPoints.RemoveAt(0);
+            dataPoints.RemoveAt(dataPoints.Count - 1);
         }
 
         lineRenderer.positionCount = dataPoints.Count;
 
+        float totalWidth = rightEdgeX - leftEdgeX;
+        float dynamicSpacing = totalWidth / (maxPoints - 1);
+        float startX = leftEdgeX;
+        float totalHeight = topEdgeY - bottomEdgeY;
+        float maxGripKg = 60f;
+
         for (int i = 0; i < dataPoints.Count; i++)
         {
-            // ÁÂÇ¥ °è»ê (X: °£°İ¿¡ µû¸¥ À§Ä¡, Y: µ¥ÀÌÅÍ °ª * ¹èÀ²)
-            float xPos = i * pointSpacing;
-            float yPos = dataPoints[i] * heightMultiplier;
+            float rawXPos = startX + (i * dynamicSpacing);
+            float clampedXPos = Mathf.Clamp(rawXPos, leftEdgeX, rightEdgeX);
 
-            lineRenderer.SetPosition(i, new Vector3(xPos, yPos, 0));
+            float kgRatio = Mathf.Clamp01(dataPoints[i] / maxGripKg);
+            float rawYPos = bottomEdgeY + (kgRatio * totalHeight);
+            float clampedYPos = Mathf.Clamp(rawYPos, bottomEdgeY, topEdgeY);
+
+            lineRenderer.SetPosition(i, new Vector3(clampedXPos, clampedYPos, 0));
         }
     }
 }
